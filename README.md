@@ -10,8 +10,7 @@ A clickable study timer for the terminal. Chain study and rest sessions, choose 
 | --- | --- | --- |
 | Windows, Intel or AMD 64-bit | `omegatimer-windows-x64.zip` | Open PowerShell in the extracted folder and run `.\omegatimer.exe 25:5` |
 | Windows on ARM64 | `omegatimer-windows-arm64.zip` | Same PowerShell command |
-| macOS, Apple silicon | `omegatimer-macos-apple-silicon.tar.gz` | Run `./omegatimer 25:5` in the extracted folder |
-| macOS, Intel | `omegatimer-macos-intel.tar.gz` | Same macOS command |
+| macOS, Intel | `omegatimer-macos-intel.tar.gz` | Run `./omegatimer 25:5` in the extracted folder |
 | Linux, Intel or AMD 64-bit | `omegatimer-linux-x64.tar.gz` | Run `./omegatimer 25:5` in the extracted folder |
 | Linux, ARM64 | `omegatimer-linux-arm64.tar.gz` | Same Linux command |
 
