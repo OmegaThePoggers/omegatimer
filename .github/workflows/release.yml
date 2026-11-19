@@ -1,5 +1,11 @@
 name: Release binaries
 on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag to build
+        required: true
+        type: string
   push:
     tags: ['v*']
 permissions:
@@ -24,6 +30,8 @@ jobs:
       PACKAGE: omegatimer-${{ matrix.name }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
       - run: rustup toolchain install stable --profile minimal --target ${{ matrix.target }}
       - if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y musl-tools
@@ -58,7 +66,8 @@ jobs:
           merge-multiple: true
       - working-directory: dist
         env:
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
           GH_TOKEN: ${{ github.token }}
         run: |
           sha256sum omegatimer-* > SHA256SUMS
-          gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --verify-tag --title "OmegaTimer $GITHUB_REF_NAME" --notes "Download the archive for your operating system and processor. Extract it and run omegatimer in a terminal." omegatimer-* SHA256SUMS
+          gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --title "OmegaTimer $RELEASE_TAG" --notes "Download the archive for your operating system and processor. Extract it and run omegatimer in a terminal." omegatimer-* SHA256SUMS
