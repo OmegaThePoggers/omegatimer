@@ -1,0 +1,64 @@
+name: Release binaries
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build ${{ matrix.name }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {name: windows-x64, os: windows-2022, target: x86_64-pc-windows-msvc}
+          - {name: windows-arm64, os: windows-11-arm, target: aarch64-pc-windows-msvc}
+          - {name: linux-x64, os: ubuntu-22.04, target: x86_64-unknown-linux-musl}
+          - {name: linux-arm64, os: ubuntu-22.04-arm, target: aarch64-unknown-linux-musl}
+          - {name: macos-intel, os: macos-15-intel, target: x86_64-apple-darwin}
+          - {name: macos-apple-silicon, os: macos-15, target: aarch64-apple-darwin}
+    runs-on: ${{ matrix.os }}
+    env:
+      CARGO_BUILD_TARGET: ${{ matrix.target }}
+      PACKAGE: omegatimer-${{ matrix.name }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: rustup toolchain install stable --profile minimal --target ${{ matrix.target }}
+      - if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y musl-tools
+      - run: cargo +stable test --locked
+      - run: cargo +stable build --release --locked
+      - if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $exe = "target/$env:CARGO_BUILD_TARGET/release/omegatimer.exe"
+          & $exe --help
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Compress-Archive -Path $exe -DestinationPath "$env:PACKAGE.zip"
+      - if: runner.os != 'Windows'
+        run: |
+          target/$CARGO_BUILD_TARGET/release/omegatimer --help
+          tar czf "$PACKAGE.tar.gz" -C "target/$CARGO_BUILD_TARGET/release" omegatimer
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}
+          path: omegatimer-${{ matrix.name }}.*
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - working-directory: dist
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          sha256sum omegatimer-* > SHA256SUMS
+          gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --verify-tag --title "OmegaTimer $GITHUB_REF_NAME" --notes "Download the archive for your operating system and processor. Extract it and run omegatimer in a terminal." omegatimer-* SHA256SUMS
