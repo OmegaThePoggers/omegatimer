@@ -19,7 +19,7 @@ Use Windows Terminal for the colors, Unicode clock, and clickable controls. To r
 With a current Rust toolchain, you can also build and install from source on any of these platforms.
 
 ```sh
-cargo install --locked --git https://github.com/OmegaThePoggers/omegatimer.git --tag v0.1.0
+cargo install --locked --git https://github.com/OmegaThePoggers/omegatimer.git --tag v0.2.0
 ```
 
 ## Use
@@ -32,3 +32,9 @@ omegatimer --glyph '#' 25:5   # Choose the clock fill
 ```
 
 Click **Queue** to append the displayed study/rest pair. Space pauses or resumes, L toggles looping, and Q quits.
+
+## Spotify Desktop
+
+Start Spotify Desktop on the same computer and play a track. OmegaTimer reads the title, artist, and play/pause state locally and refreshes the Spotify row about every two seconds. Closing Spotify clears the row. You can open either app first.
+
+Linux uses the MPRIS session bus, Windows uses system media sessions, and Intel macOS uses Spotify’s scripting interface. On macOS, allow Automation access from your terminal if prompted. No Spotify developer account, API key, or separate login is required. Phone-only and browser playback are outside the desktop integration.

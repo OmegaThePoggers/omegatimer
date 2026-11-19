@@ -1,3 +1,4 @@
+mod spotify;
 use crossterm::{
     cursor::{Hide, MoveTo, Show},
     event::{
@@ -227,6 +228,7 @@ fn draw(
     (w, h): (u16, u16),
     aspect: f64,
     beat: usize,
+    playback: &spotify::Playback,
 ) -> io::Result<Frame> {
     let (tile_w, tile_h) = square_tile(w, h, aspect);
     let mut f = Frame {
@@ -359,7 +361,7 @@ fn draw(
                 Action::Pause,
             )?;
         }
-        f.label(0, bar_y + 5, MUTED, "Spotify   ·   —")?;
+        f.label(0, bar_y + 5, MUTED, playback.row(width))?;
         return Ok(f);
     }
     f.y = tile_h - 19;
@@ -400,7 +402,7 @@ fn draw(
         )?;
     }
     f.label(0, 15, MUTED, "─".repeat(width as usize))?;
-    f.label(0, 16, MUTED, "Spotify   ·   —")?;
+    f.label(0, 16, MUTED, playback.row(width))?;
     f.label(0, 18, MUTED, "a/z study  s/x rest  ↵ add  L loop  ␣ hold")?;
     Ok(f)
 }
@@ -430,6 +432,8 @@ fn run(mut timer: Timer, glyph: char) -> io::Result<()> {
     let _screen = Screen;
     execute!(out, EnterAlternateScreen, Hide, EnableMouseCapture)?;
     let mut draft = timer.chain.last().copied().unwrap_or([25, 5]);
+    let music = spotify::watch();
+    let mut playback = spotify::Playback::default();
     let mut previous = Vec::new();
     let animation_start = Instant::now();
     let mut last = animation_start;
@@ -449,6 +453,9 @@ fn run(mut timer: Timer, glyph: char) -> io::Result<()> {
             }
             _ => (terminal::size()?, 2.0),
         };
+        if let Some(latest) = music.try_iter().last() {
+            playback = latest;
+        }
         let f = draw(
             &timer,
             draft,
@@ -456,6 +463,7 @@ fn run(mut timer: Timer, glyph: char) -> io::Result<()> {
             size,
             aspect,
             (animation_start.elapsed().as_millis() / 320) as usize,
+            &playback,
         )?;
         if previous != f.bytes {
             out.write_all(&f.bytes)?;
